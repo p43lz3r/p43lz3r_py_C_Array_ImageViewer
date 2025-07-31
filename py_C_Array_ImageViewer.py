@@ -2,23 +2,50 @@
 """
 RGB565 GUI Viewer for C Header Files
 GUI tool to select and visualize RGB565 image data from C header files
+Cross-platform compatible (Windows, Linux, macOS)
 """
 
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 import re
-import numpy as np
-from PIL import Image, ImageTk
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import threading
+
+# Handle imports with fallbacks for different systems
+try:
+    import numpy as np
+except ImportError:
+    print("Error: NumPy is required. Install with: pip install numpy")
+    exit(1)
+
+try:
+    from PIL import Image
+    # Try to import ImageTk, but it's not critical for core functionality
+    try:
+        from PIL import ImageTk
+        IMAGETK_AVAILABLE = True
+    except ImportError:
+        IMAGETK_AVAILABLE = False
+        print("Warning: PIL ImageTk not available. Some features may be limited.")
+except ImportError:
+    print("Error: Pillow is required. Install with: pip install pillow")
+    exit(1)
+
+try:
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+    import matplotlib
+    # Use non-interactive backend to avoid display issues on headless systems
+    matplotlib.use('TkAgg')
+except ImportError:
+    print("Error: Matplotlib is required. Install with: pip install matplotlib")
+    exit(1)
 
 class RGB565Viewer:
     def __init__(self, root):
         self.root = root
         self.root.title("RGB565 Image Viewer")
-        self.root.geometry("800x800")
+        self.root.geometry("800x600")
         
         self.current_images = []
         self.current_index = 0
@@ -50,7 +77,7 @@ class RGB565Viewer:
         listbox_frame.grid(row=1, column=0, columnspan=3, sticky=(tk.W, tk.E), pady=5)
         listbox_frame.columnconfigure(0, weight=1)
         
-        self.file_listbox = tk.Listbox(listbox_frame, height=4)
+        self.file_listbox = tk.Listbox(listbox_frame, height=6)
         self.file_listbox.grid(row=0, column=0, sticky=(tk.W, tk.E))
         self.file_listbox.bind('<<ListboxSelect>>', self.on_file_select)
         
@@ -512,13 +539,73 @@ class RGB565Viewer:
 
 def main():
     """Main function to start the GUI"""
+    # Check if we're running on a supported platform
+    import platform
+    system = platform.system()
+    print(f"Starting RGB565 Viewer on {system} {platform.release()}")
+    
+    # Verify all required components
+    missing_deps = []
+    
     try:
+        import numpy
+        print(f"✓ NumPy {numpy.__version__}")
+    except ImportError:
+        missing_deps.append("numpy")
+    
+    try:
+        import PIL
+        print(f"✓ Pillow {PIL.__version__}")
+    except ImportError:
+        missing_deps.append("pillow")
+    
+    try:
+        import matplotlib
+        print(f"✓ Matplotlib {matplotlib.__version__}")
+    except ImportError:
+        missing_deps.append("matplotlib")
+    
+    if missing_deps:
+        error_msg = f"Missing required dependencies: {', '.join(missing_deps)}\n"
+        error_msg += f"Install with: pip install {' '.join(missing_deps)}"
+        print(f"Error: {error_msg}")
+        
+        # Try to show GUI error if tkinter works
+        try:
+            root = tk.Tk()
+            root.withdraw()  # Hide main window
+            messagebox.showerror("Missing Dependencies", error_msg)
+        except:
+            pass
+        return
+    
+    try:
+        # Test tkinter
+        root = tk.Tk()
+        root.withdraw()  # Test window creation
+        root.destroy()
+        print("✓ Tkinter GUI support available")
+        
+        # Start the actual application
         root = tk.Tk()
         app = RGB565Viewer(root)
+        
+        print("RGB565 Viewer started successfully!")
+        print("Select a .h file from the list and click 'Process File' to begin.")
+        
         root.mainloop()
+        
     except Exception as e:
-        print(f"Error starting GUI: {e}")
+        error_msg = f"Error starting GUI: {e}\n\nThis might be due to:\n"
+        error_msg += "- Missing display server (Linux: install GUI desktop)\n"
+        error_msg += "- Outdated Python/Tkinter\n"
+        error_msg += "- System-specific GUI issues"
+        
+        print(error_msg)
+        
+        # Log more detailed error info
         import traceback
+        print("\nDetailed error information:")
         traceback.print_exc()
 
 if __name__ == "__main__":
