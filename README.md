@@ -3,7 +3,7 @@ Can show the RGB656 images from a C header file
 
 # RGB565 Image Viewer for C Header Files
 
-A Python tool to visualize and debug RGB565 image data stored in C header files, specifically designed for Arduino/PlatformIO projects using TFT displays like the ILI9341.
+A Python tool to visualize image data stored C arrays in C header files.
 
 ## Overview
 
