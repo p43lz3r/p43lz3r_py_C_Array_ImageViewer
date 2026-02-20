@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C Array Image Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f1ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8eaff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            color: #666;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .upload-area .highlight {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #764ba2;
+            color: white;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-secondary:hover {
+            background: #653a82;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+        }
+
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a52;
+        }
+
+        .btn-invert {
+            background: #9c27b0;
+            color: white;
+        }
+
+        .btn-invert:hover {
+            background: #7b1fa2;
+        }
+
+        .file-list {
+            list-style: none;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            background: #f5f5f5;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: #e8e8ff;
+        }
+
+        .file-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .file-count {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 4px;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 400px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #imageCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        .placeholder {
+            color: #999;
+            text-align: center;
+        }
+
+        .placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .image-info {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e0e0ff;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .info-value {
+            color: #666;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        @media (max-width: 1024px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖼️ C Array Image Viewer</h1>
+            <p>Upload and visualize LVGL C array images with support for multiple files and formats</p>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-title">📁 Upload & Manage</div>
+                
+                <div id="statusMessage" class="message"></div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">⬆️</div>
+                    <p>Drag and drop <span class="highlight">.c or .h files</span> here</p>
+                    <p style="font-size: 12px; color: #999;">or click to select files</p>
+                </div>
+
+                <input type="file" id="fileInput" multiple accept=".c,.h" />
+
+                <div class="button-group">
+                    <button class="btn-primary" id="selectBtn">Select Files</button>
+                    <button class="btn-danger" id="clearBtn">Clear All</button>
+                </div>
+
+                <div class="section-title" style="margin-top: 20px;">📋 Loaded Files</div>
+                <ul class="file-list" id="fileList"></ul>
+            </div>
+
+            <div class="section">
+                <div class="section-title">👁️ Image Preview</div>
+                
+                <div class="canvas-wrapper">
+                    <div id="canvasPlaceholder" class="placeholder">
+                        <div class="placeholder-icon">🎨</div>
+                        <p>Select a file to preview</p>
+                    </div>
+                    <canvas id="imageCanvas" style="display: none;"></canvas>
+                </div>
+
+                <div class="control-buttons">
+                    <button class="btn-secondary" id="prevBtn" style="display: none;">⬅️ Back</button>
+                    <button class="btn-secondary" id="nextBtn" style="display: none;">Next ➡️</button>
+                    <button class="btn-invert" id="invertBtn" style="display: none;">🔄 Invert Colors</button>
+                    <button class="btn-secondary" id="downloadBtn" style="display: none;">⬇️ Download PNG</button>
+                </div>
+
+                <div class="image-info" id="imageInfo" style="display: none;">
+                    <div class="info-row">
+                        <span class="info-label">Dimensions:</span>
+                        <span class="info-value"><span id="infoDimensions">-</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Color Format:</span>
+                        <span class="info-value"><span id="infoFormat">-</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Data Size:</span>
+                        <span class="info-value"><span id="infoSize">-</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Pixels:</span>
+                        <span class="info-value"><span id="infoPixels">-</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
